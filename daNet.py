@@ -98,15 +98,18 @@ h, h2, h3y, h4y, h3d, h4d, py_x, pd_x = model(X, w_h, w_h2, w_h3y, w_h4y, w_h3d,
 y_x = T.argmax(py_x, axis=1)
 d_x = T.argmax(pd_x, axis=1)
 
-cost_1 = T.mean(T.nnet.categorical_crossentropy(noise_py_x, Y)) + T.mean(T.nnet.categorical_crossentropy(noise_pd_x, D_random)) 
+alpha = 1.
+beta = 1.
+
+cost_1 = T.mean(T.nnet.categorical_crossentropy(noise_py_x, Y)) + alpha*T.mean(T.nnet.categorical_crossentropy(noise_pd_x, D_random)) 
 params_1 = [w_h, w_h2, w_h3y, w_h4y, w_oy]
 updates_1 = RMSprop(cost_1, params_1, lr=0.001)
 
-cost_2 = T.mean(T.nnet.categorical_crossentropy(noise_pd_x, D_random)) 
+cost_2 = alpha*T.mean(T.nnet.categorical_crossentropy(noise_pd_x, D_random)) 
 params_2 = [w_h, w_h2]
 updates_2 = RMSprop(cost_2, params_2, lr=0.001)
 
-cost_3 = T.mean(T.nnet.categorical_crossentropy(noise_pd_x, D)) 
+cost_3 = beta*T.mean(T.nnet.categorical_crossentropy(noise_pd_x, D)) 
 params_3 = [w_h3d, w_h4d, w_od]
 updates_3 = RMSprop(cost_3, params_3, lr=0.001)
 
@@ -122,28 +125,38 @@ epochs = 100
 
 for e in range(epochs):
 
-    # In this step we update the theta_f and theta_y
-
     for i in range(1):
         for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(64, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
             cost_1 = train_1(trX[start1:end1,:], trY[start1:end1,:], trD_fake[start1:end1,:])
             cost_1 = train_1(trX[start1+len(trX)/2:end1+len(trX)/2,:], trY[start1+len(trX)/2:end1+len(trX)/2,:], trD_fake[start1+len(trX)/2:end1+len(trX)/2,:])
             cost_2 = train_2(teX[start2:end2,:], teD_fake[start2:end2,:])
-
-
-    # In this step we update theta_d
-
-    for i in range(1):
-        for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(64, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
             cost_3 = train_3(trX[start1:end1,:], trD[start1:end1,:])
             cost_3 = train_3(trX[start1+len(trX)/2:end1+len(trX)/2,:], trD[start1+len(trX)/2:end1+len(trX)/2,:])
             cost_3 = train_3(teX[start2:end2,:], teD[start2:end2,:])
 
+
+
+	print '............................................................'
 	print '............................................................'
 	print 'accuracy on training set:',np.mean(np.argmax(trY, axis=1) == predict(trX))
 	print 'accuracy on test set:',np.mean(np.argmax(teY, axis=1) == predict(teX))
 	print 'accuracy on domain classification, training set:',np.mean(np.argmax(trD, axis=1) == predict_d(trX))
 	print 'accuracy on domain classification, test set:',np.mean(np.argmax(teD, axis=1) == predict_d(teX))
+
+
+    # In this step we update theta_d
+
+    #~ for i in range(1):
+        #~ for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(64, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
+            #~ cost_3 = train_3(trX[start1:end1,:], trD[start1:end1,:])
+            #~ cost_3 = train_3(trX[start1+len(trX)/2:end1+len(trX)/2,:], trD[start1+len(trX)/2:end1+len(trX)/2,:])
+            #~ cost_3 = train_3(teX[start2:end2,:], teD[start2:end2,:])
+
+	#~ print '.......................'
+	#~ print 'accuracy on training set:',np.mean(np.argmax(trY, axis=1) == predict(trX))
+	#~ print 'accuracy on test set:',np.mean(np.argmax(teY, axis=1) == predict(teX))
+	#~ print 'accuracy on domain classification, training set:',np.mean(np.argmax(trD, axis=1) == predict_d(trX))
+	#~ print 'accuracy on domain classification, test set:',np.mean(np.argmax(teD, axis=1) == predict_d(teX))
 	 
 
 
