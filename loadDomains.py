@@ -37,7 +37,7 @@ def mnist(ntrain=60000,ntest=10000,onehot=True):
     teX = teX/255.
 
     X_normal = trX[:20000,:]
-    X_circles = injectCircles(trX[20000:40000,:],noCircles=3)
+    X_circles = injectCircles(trX[20000:40000,:],noCircles=5)
     X_negative = 1 - trX[40000:,:]
        
     trD = np.hstack((np.zeros((20000),dtype='uint8'),np.ones((20000),dtype='uint8')))

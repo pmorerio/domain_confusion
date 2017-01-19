@@ -89,9 +89,9 @@ w_h4y = init_weights((625, 625))
 w_h3d = init_weights((625, 625))
 w_h4d = init_weights((625, 625))
 w_oy = init_weights((625, 10))
-w_od = init_weights((625, 2))
+w_od = init_weights((625, 3))
 
-noise_h, noise_h2, noise_h3y, noise_h4y, noise_h3d, noise_h4d, noise_py_x, noise_pd_x = model(X, w_h, w_h2, w_h3y, w_h4y, w_h3d, w_h4d, w_oy, w_od, 0.2, 0.5)
+noise_h, noise_h2, noise_h3y, noise_h4y, noise_h3d, noise_h4d, noise_py_x, noise_pd_x = model(X, w_h, w_h2, w_h3y, w_h4y, w_h3d, w_h4d, w_oy, w_od, 0., 0.)
 
 h, h2, h3y, h4y, h3d, h4d, py_x, pd_x = model(X, w_h, w_h2, w_h3y, w_h4y, w_h3d, w_h4d, w_oy, w_od, 0., 0.)
 
@@ -115,29 +115,36 @@ train_2 = theano.function(inputs=[X, D_random], outputs=cost_2, updates=updates_
 train_3 = theano.function(inputs=[X, D], outputs=cost_3, updates=updates_3, allow_input_downcast=True)
 
 predict = theano.function(inputs=[X], outputs=y_x, allow_input_downcast=True)
+predict_d = theano.function(inputs=[X], outputs=d_x, allow_input_downcast=True)
 
-epochs = 10
+
+epochs = 100
 
 for e in range(epochs):
 
     # In this step we update the theta_f and theta_y
 
-    for i in range(10):
-        for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(128, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
-            cost_1 = train_1(trX[start1:end1], trY[start1:end1], trD_fake[start1:end1])
-            cost_1 = train_1(trX[start1+len(trX)/2:end1+len(trX)/2], trY[start1+len(trX)/2:end1+len(trX)/2], trD_fake[start1+len(trX)/2:end1+len(trX)/2])
-            cost_2 = train_2(teX[start2:end2], teD_fake[start2:end2])
-            print np.mean(np.argmax(teY, axis=1) == predict(teX))
+    for i in range(1):
+        for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(64, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
+            cost_1 = train_1(trX[start1:end1,:], trY[start1:end1,:], trD_fake[start1:end1,:])
+            cost_1 = train_1(trX[start1+len(trX)/2:end1+len(trX)/2,:], trY[start1+len(trX)/2:end1+len(trX)/2,:], trD_fake[start1+len(trX)/2:end1+len(trX)/2,:])
+            cost_2 = train_2(teX[start2:end2,:], teD_fake[start2:end2,:])
 
 
     # In this step we update theta_d
 
-    for i in range(10):
-        for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(128, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
-            cost_3 = train_3(trX[start1:end1], trD[start1:end1])
-            cost_3 = train_3(trX[start1+len(trX)/2:end1+len(trX)/2], trD[start1+len(trX)/2:end1+len(trX)/2])
-            cost_3 = train_3(teX[start2:end2], teD[start2:end2])
-            print np.mean(np.argmax(teY, axis=1) == predict(teX))
+    for i in range(1):
+        for start1, end1, start2, end2 in zip(range(0, len(trX)/2, 64), range(64, len(trX)/2, 64), range(0, len(teX), 64), range(64, len(teX), 64)):
+            cost_3 = train_3(trX[start1:end1,:], trD[start1:end1,:])
+            cost_3 = train_3(trX[start1+len(trX)/2:end1+len(trX)/2,:], trD[start1+len(trX)/2:end1+len(trX)/2,:])
+            cost_3 = train_3(teX[start2:end2,:], teD[start2:end2,:])
+
+	print '............................................................'
+	print 'accuracy on training set:',np.mean(np.argmax(trY, axis=1) == predict(trX))
+	print 'accuracy on test set:',np.mean(np.argmax(teY, axis=1) == predict(teX))
+	print 'accuracy on domain classification, training set:',np.mean(np.argmax(trD, axis=1) == predict_d(trX))
+	print 'accuracy on domain classification, test set:',np.mean(np.argmax(teD, axis=1) == predict_d(teX))
+	 
 
 
 
